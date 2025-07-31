@@ -1,0 +1,413 @@
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, RotateCcw, Shuffle, Book } from 'lucide-react';
+
+const GraphicDesignFlashcards = () => {
+  // Original flashcard data from the CSV
+  const originalFlashcards = [
+    {
+      front: "Elements of Design",
+      back: "The elements of design are the fundamental visual components that designers use to create a composition. These include line, shape, form, space, color, value, and texture. They are the building blocks that, when combined, form a visually appealing and effective design."
+    },
+    {
+      front: "Line",
+      back: "Line is a straight or curved mark that connects two points or is the path of a moving point. Lines vary in weight (thickness or thinness), direction, and length. Lines can also be implied."
+    },
+    {
+      front: "Shape",
+      back: "A two-dimensional area enclosed by a line."
+    },
+    {
+      front: "Form",
+      back: "A three-dimensional shape with volume. Examples are cubes, spheres, and sculptures."
+    },
+    {
+      front: "Color",
+      back: "Color is the perception of light reflected from the surface of a shape or form."
+    },
+    {
+      front: "Value",
+      back: "The lightness or darkness of a color."
+    },
+    {
+      front: "Space",
+      back: "The area around, between, or within objects in a design."
+    },
+    {
+      front: "Texture",
+      back: "The surface quality of an object, how it feels or looks."
+    },
+    {
+      front: "Principles of Design",
+      back: "The principles of design are fundamental guidelines used in art, design, and architecture to organize visual elements and create cohesive, effective, and aesthetically pleasing compositions. These principles, such as balance, contrast, and unity, help designers make intentional decisions about how to arrange elements, ensuring their work is not only visually appealing but also communicates its purpose effectively."
+    },
+    {
+      front: "Balance",
+      back: "The distribution of visual weight, creating stability and harmony, with types like symmetrical, asymmetrical, and radial balance."
+    },
+    {
+      front: "Emphasis",
+      back: "Drawing attention to a specific area or element in a design."
+    },
+    {
+      front: "Rhythm",
+      back: "Rhythm occurs when one or more elements of a design are used repeatedly to create a feeling of organized movement, or a visual tempo."
+    },
+    {
+      front: "Movement",
+      back: "Movement is the path the viewer's eye takes through the work of art or design. Movement can guide the viewer to focal areas or create the look or feeling of action."
+    },
+    {
+      front: "Pattern/Repetition",
+      back: "The repetition of elements to create a visual rhythm or texture."
+    },
+    {
+      front: "Scale/Proportion",
+      back: "The relationship between the size and scale of different elements in a design."
+    },
+    {
+      front: "Proximity/Unity",
+      back: "The feeling of harmony and completeness in a design, while also including enough visual interest to prevent monotony."
+    },
+    {
+      front: "Contrast",
+      back: "The juxtaposition of opposing elements, like light and dark, to create visual interest."
+    },
+    {
+      front: "Hierarchy",
+      back: "The arrangement of elements in order of importance to guide the viewer's eye."
+    },
+    {
+      front: "Less is More",
+      back: "Reducing elements to their essential components to create a clear and uncluttered design. Keep things simple!"
+    }
+  ];
+
+  const [mode, setMode] = useState('study'); // 'create', 'loading', 'study'
+  const [topic, setTopic] = useState('');
+  const [flashcards, setFlashcards] = useState(originalFlashcards);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const [showCreateMode, setShowCreateMode] = useState(false);
+
+  const generateFlashcards = async () => {
+    if (!topic.trim()) return;
+    
+    setMode('loading');
+    
+    const prompt = `You are tasked with creating educational flashcards about "${topic}". Your goal is to create concise, clear, and accurate flashcard pairs that would help someone learn this topic.
+
+Guidelines for creating effective flashcards:
+1. Each flashcard should have a clear term/concept on one side and a concise definition/explanation on the other
+2. Terms should be specific and focused (ideally 1-5 words)
+3. Definitions should be clear and brief (ideally under 100 words)
+4. Focus on the most important concepts related to the topic
+5. Make the content educational, accurate, and helpful for learning
+
+Based on the topic, adapt your approach:
+* For design topics: Use design terms as the front and explanations as the back
+* For historical subjects: Use events/people as terms and dates/significance as definitions
+* For scientific topics: Use concepts/terms as the front and explanations as the back
+* For language learning: Use words in one language as terms and translations as definitions
+
+Please provide exactly 10-15 flashcards in this JSON format - don't include any text outside the JSON:
+[
+  {
+    "front": "Term or concept",
+    "back": "Definition or explanation"
+  }
+]`;
+    
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 2000,
+          messages: [
+            { role: "user", content: prompt }
+          ]
+        })
+      });
+      
+      const data = await response.json();
+      let responseText = data.content[0].text;
+      
+      // Clean up the response to extract JSON
+      responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      
+      const cards = JSON.parse(responseText);
+      setFlashcards(cards);
+      setCurrentIndex(0);
+      setFlipped(false);
+      setMode('study');
+      setShowCreateMode(false);
+    } catch (error) {
+      console.error('Error generating flashcards:', error);
+      alert('Failed to generate flashcards. Please try again.');
+      setMode('study');
+    }
+  };
+
+  const handleFlip = () => {
+    if (!animating) {
+      setFlipped(!flipped);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex < flashcards.length - 1 && !animating) {
+      setAnimating(true);
+      setTimeout(() => {
+        setFlipped(false);
+        setCurrentIndex(currentIndex + 1);
+        setTimeout(() => setAnimating(false), 50);
+      }, 150);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentIndex > 0 && !animating) {
+      setAnimating(true);
+      setTimeout(() => {
+        setFlipped(false);
+        setCurrentIndex(currentIndex - 1);
+        setTimeout(() => setAnimating(false), 50);
+      }, 150);
+    }
+  };
+
+  const shuffleCards = () => {
+    const shuffled = [...flashcards].sort(() => Math.random() - 0.5);
+    setFlashcards(shuffled);
+    setCurrentIndex(0);
+    setFlipped(false);
+  };
+
+  const resetToOriginal = () => {
+    setFlashcards(originalFlashcards);
+    setCurrentIndex(0);
+    setFlipped(false);
+    setShowCreateMode(false);
+  };
+
+  const handleKeyPress = (e) => {
+    if (mode === 'study') {
+      if (e.key === 'ArrowLeft') handlePrevious();
+      if (e.key === 'ArrowRight') handleNext();
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        handleFlip();
+      }
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [mode, currentIndex, flashcards.length, flipped, animating]);
+
+  if (mode === 'loading') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-teal-500 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-6"></div>
+          <h1 className="text-white text-3xl font-bold mb-2">Generating Flashcards</h1>
+          <p className="text-white/80">Creating your custom study set...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (showCreateMode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-teal-500 flex items-center justify-center p-4">
+        <div className="w-full max-w-lg">
+          <h1 className="text-white text-4xl font-bold text-center mb-8">Create Custom Flashcards</h1>
+          
+          <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-2xl">
+            <textarea
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="Describe a topic for flashcards...&#10;&#10;e.g. JavaScript fundamentals&#10;e.g. Spanish vocabulary for travel&#10;e.g. Biology cell structure"
+              className="w-full h-48 text-gray-900 placeholder-gray-500 resize-none focus:outline-none text-lg leading-relaxed"
+            />
+          </div>
+          
+          <div className="flex gap-4 mt-8">
+            <button
+              onClick={() => setShowCreateMode(false)}
+              className="flex-1 py-4 bg-white/20 text-white font-medium rounded-full hover:bg-white/30 transition-all text-lg"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={generateFlashcards}
+              disabled={!topic.trim()}
+              className="flex-1 py-4 bg-white text-purple-600 font-bold rounded-full hover:bg-gray-100 transition-all text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Generate Cards
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentCard = flashcards[currentIndex];
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-teal-500 flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-white text-4xl font-bold mb-2 flex items-center justify-center gap-3">
+            <Book className="w-10 h-10" />
+            Graphic Design Flashcards
+          </h1>
+          <p className="text-white/80 text-lg">Master the fundamentals of design</p>
+        </div>
+
+        {/* Controls */}
+        <div className="flex justify-center gap-4 mb-8">
+          <button
+            onClick={resetToOriginal}
+            className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-all"
+            title="Reset to Original"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset
+          </button>
+          <button
+            onClick={shuffleCards}
+            className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-full hover:bg-white/30 transition-all"
+            title="Shuffle Cards"
+          >
+            <Shuffle className="w-4 h-4" />
+            Shuffle
+          </button>
+          <button
+            onClick={() => setShowCreateMode(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-purple-600 font-medium rounded-full hover:bg-gray-100 transition-all"
+          >
+            + Create Custom
+          </button>
+        </div>
+
+        {/* Flashcard */}
+        <div className="relative mb-8" style={{ perspective: '1000px' }}>
+          <div
+            className={`relative w-full h-96 transition-all duration-500 cursor-pointer ${
+              flipped ? 'rotate-y-180' : ''
+            } ${animating ? 'scale-95 opacity-80' : 'scale-100 opacity-100'}`}
+            onClick={handleFlip}
+            style={{ transformStyle: 'preserve-3d' }}
+          >
+            {/* Front of card */}
+            <div 
+              className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl flex flex-col items-center justify-center p-8 backface-hidden border border-white/20"
+              style={{ backfaceVisibility: 'hidden' }}
+            >
+              <div className="text-center flex-1 flex items-center justify-center">
+                <h2 className="text-4xl font-bold text-gray-800 leading-tight">
+                  {currentCard?.front || 'Loading...'}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2 text-purple-600 mt-auto">
+                <span className="text-sm font-medium">Click or use ↑↓ arrows to flip</span>
+              </div>
+            </div>
+            
+            {/* Back of card */}
+            <div 
+              className="absolute inset-0 bg-gradient-to-br from-purple-50 to-blue-50 rounded-3xl shadow-2xl flex items-center justify-center p-8 rotate-y-180 backface-hidden border border-purple-200"
+              style={{ 
+                backfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)'
+              }}
+            >
+              <div className="text-center max-w-3xl">
+                <p className="text-xl text-gray-700 leading-relaxed">
+                  {currentCard?.back || 'Loading...'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Navigation */}
+        <div className="flex items-center justify-center gap-8">
+          <button
+            onClick={handlePrevious}
+            disabled={currentIndex === 0}
+            className={`p-4 rounded-full transition-all ${
+              currentIndex === 0 
+                ? 'bg-white/10 text-white/30 cursor-not-allowed' 
+                : 'bg-white/20 text-white hover:bg-white/30 hover:scale-110'
+            }`}
+          >
+            <ChevronLeft size={28} />
+          </button>
+          
+          <div className="text-center">
+            <div className="text-white text-2xl font-bold mb-2">
+              {currentIndex + 1} / {flashcards.length}
+            </div>
+            <div className="w-64 bg-white/20 rounded-full h-2">
+              <div 
+                className="bg-white rounded-full h-2 transition-all duration-300"
+                style={{ width: `${((currentIndex + 1) / flashcards.length) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleNext}
+            disabled={currentIndex === flashcards.length - 1}
+            className={`p-4 rounded-full transition-all ${
+              currentIndex === flashcards.length - 1 
+                ? 'bg-white/10 text-white/30 cursor-not-allowed' 
+                : 'bg-white/20 text-white hover:bg-white/30 hover:scale-110'
+            }`}
+          >
+            <ChevronRight size={28} />
+          </button>
+        </div>
+
+        {/* Instructions */}
+        <div className="text-center mt-8">
+          <p className="text-white/70 text-sm">
+            Use arrow keys: ← → to navigate • ↑ ↓ or Space to flip
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Add CSS for 3D flip animation
+const style = document.createElement('style');
+style.textContent = `
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+  .backface-hidden {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+`;
+document.head.appendChild(style);
+
+export default GraphicDesignFlashcards;<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ElementsPrinciplesCards</title>
+</head>
+
+<body>
+</body>
+</html>
