@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Graphic Design Flashcards</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: linear-gradient(to bottom right, #7e5bef, #3f83f8, #2dd4bf);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-container {
+      perspective: 1000px;
+      margin: 30px 0;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      transform-style: preserve-3d;
+      transition: transform 0.5s;
+      cursor: pointer;
+    }
+
+    .flipped {
+      transform: rotateY(180deg);
+    }
+
+    .side {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      backface-visibility: hidden;
+    }
+
+    .front {
+      background: rgba(255, 255, 255, 0.95);
+      color: #333;
+    }
+
+    .back {
+      background: linear-gradient(to bottom right, #f3e8ff, #dbeafe);
+      transform: rotateY(180deg);
+      color: #333;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+    }
+
+    .btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .btn-white {
+      background: white;
+      color: #6b21a8;
+      font-weight: bold;
+    }
+
+    .btn-white:hover {
+      background: #f3f4f6;
+    }
+
+    .disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .progress {
+      margin-top: 20px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: white;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 5px auto;
+      width: 80%;
+    }
+
+    .progress-fill {
+      background: #fff;
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .instructions {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Graphic Design Flashcards</h1>
+  <p>Master the fundamentals of design</p>
+
+  <div class="card-container">
+    <div class="card" id="flashcard">
+      <div class="side front" id="card-front"></div>
+      <div class="side back" id="card-back"></div>
+    </div>
+  </div>
+
+  <div>
+    <button class="btn" id="prevBtn">← Prev</button>
+    <button class="btn" id="shuffleBtn">🔀 Shuffle</button>
+    <button class="btn" id="resetBtn">⟳ Reset</button>
+    <button class="btn" id="nextBtn">Next →</button>
+  </div>
+
+  <div class="progress">
+    <div id="progressText">1 / 1</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+    </div>
+  </div>
+
+  <div class="instructions">
+    Click or press ↑ ↓ or Space to flip • ← → to navigate
+  </div>
+</div>
+
+<script>
+  const originalFlashcards = [
+    { front: "Elements of Design", back: "The elements of design are..." },
+    { front: "Line", back: "Line is a straight or curved mark..." },
+    { front: "Shape", back: "A two-dimensional area enclosed by a line." },
+    { front: "Form", back: "A three-dimensional shape with volume..." },
+    { front: "Color", back: "Color is the perception of light..." },
+    { front: "Value", back: "The lightness or darkness of a color." },
+    { front: "Space", back: "The area around, between, or within objects..." },
+    { front: "Texture", back: "The surface quality of an object..." },
+    { front: "Principles of Design", back: "The principles of design are guidelines..." },
+    { front: "Balance", back: "The distribution of visual weight..." },
+    { front: "Emphasis", back: "Drawing attention to a specific area..." },
+    { front: "Rhythm", back: "Rhythm occurs when elements are repeated..." },
+    { front: "Movement", back: "Movement is the path the viewer's eye takes..." },
+    { front: "Pattern/Repetition", back: "The repetition of elements to create rhythm..." },
+    { front: "Scale/Proportion", back: "The relationship between size and scale..." },
+    { front: "Proximity/Unity", back: "Harmony and completeness in design..." },
+    { front: "Contrast", back: "Juxtaposition of opposing elements..." },
+    { front: "Hierarchy", back: "Arrangement of elements in order of importance." },
+    { front: "Less is More", back: "Reducing elements to essentials..." }
+  ];
+
+  let flashcards = [...originalFlashcards];
+  let currentIndex = 0;
+  let flipped = false;
+
+  const card = document.getElementById('flashcard');
+  const front = document.getElementById('card-front');
+  const back = document.getElementById('card-back');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const progressText = document.getElementById('progressText');
+  const progressFill = document.getElementById('progressFill');
+
+  function updateCard() {
+    front.textContent = flashcards[currentIndex].front;
+    back.textContent = flashcards[currentIndex].back;
+    progressText.textContent = `${currentIndex + 1} / ${flashcards.length}`;
+    progressFill.style.width = `${((currentIndex + 1) / flashcards.length) * 100}%`;
+    card.classList.remove('flipped');
+    flipped = false;
+
+    prevBtn.classList.toggle('disabled', currentIndex === 0);
+    nextBtn.classList.toggle('disabled', currentIndex === flashcards.length - 1);
+  }
+
+  card.addEventListener('click', () => {
+    flipped = !flipped;
+    card.classList.toggle('flipped', flipped);
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (currentIndex > 0) {
+      currentIndex--;
+      updateCard();
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentIndex < flashcards.length - 1) {
+      currentIndex++;
+      updateCard();
+    }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    flashcards = [...originalFlashcards];
+    currentIndex = 0;
+    updateCard();
+  });
+
+  shuffleBtn.addEventListener('click', () => {
+    flashcards = [...flashcards].sort(() => Math.random() - 0.5);
+    currentIndex = 0;
+    updateCard();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') prevBtn.click();
+    if (e.key === 'ArrowRight') nextBtn.click();
+    if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      card.click();
+    }
+  });
+
+  updateCard();
+</script>
+
+</body>
+</html>
+
