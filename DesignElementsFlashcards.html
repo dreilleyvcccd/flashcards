@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elements of Design Flashcards</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .flashcard-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 500px;
+            min-height: 400px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ffa726);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .card-counter {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .card-container {
+            position: relative;
+            height: 300px;
+            perspective: 1000px;
+            margin: 30px;
+        }
+
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .card-front h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-front p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .card-back p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            background: #f8f9fa;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(108, 92, 231, 0.3);
+        }
+
+        .nav-btn:disabled {
+            background: #ddd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .flip-hint {
+            background: #fd79a8;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e9ecef;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #ff6b6b, #ffa726);
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 600px) {
+            .card-container {
+                margin: 20px;
+                height: 280px;
+            }
+            
+            .card-front h2 {
+                font-size: 1.6rem;
+            }
+            
+            .navigation {
+                padding: 15px 20px;
+            }
+            
+            .nav-btn {
+                padding: 10px 16px;
+                min-width: 80px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="flashcard-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="header">
+            <h1>Elements of Design</h1>
+            <div class="card-counter">
+                Card <span id="currentCard">1</span> of <span id="totalCards">11</span>
+            </div>
+        </div>
+
+        <div class="card-container">
+            <div class="card" id="flashcard">
+                <div class="card-face card-front">
+                    <h2 id="cardTitle">Elements of Design</h2>
+                    <p>Click to reveal definition</p>
+                </div>
+                <div class="card-face card-back">
+                    <p id="cardDefinition">The fundamental visual components that designers use to create compositions. These basic building blocks include line, shape, form, space, color, value, texture, size, direction, and contrast. Understanding and mastering these elements is essential for effective visual communication.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <button class="nav-btn" id="prevBtn" onclick="previousCard()">← Previous</button>
+            <div class="flip-hint">Click card to flip</div>
+            <button class="nav-btn" id="nextBtn" onclick="nextCard()">Next →</button>
+        </div>
+    </div>
+
+    <script>
+        const flashcards = [
+            {
+                title: "Elements of Design",
+                definition: "The fundamental visual components that designers use to create compositions. These basic building blocks include line, shape, form, space, color, value, texture, size, direction, and contrast. Understanding and mastering these elements is essential for effective visual communication."
+            },
+            {
+                title: "Line",
+                definition: "The most basic element of design. A line is a mark connecting two points and can vary in weight, color, texture, and style. Lines can be straight, curved, thick, thin, solid, or dashed."
+            },
+            {
+                title: "Shape",
+                definition: "A two-dimensional area defined by boundaries. Shapes can be geometric (circles, squares, triangles) or organic (irregular, natural forms). They are fundamental building blocks in design."
+            },
+            {
+                title: "Form",
+                definition: "A three-dimensional object with volume and thickness. Form gives the illusion of depth and can be created through shading, perspective, and overlapping elements."
+            },
+            {
+                title: "Space",
+                definition: "The area around, between, and within design elements. Includes positive space (occupied areas) and negative space (empty areas). Proper use of space creates balance and visual hierarchy."
+            },
+            {
+                title: "Color",
+                definition: "The visual perception of light wavelengths. Color has three properties: hue (the color itself), saturation (intensity), and value (lightness/darkness). It evokes emotions and creates visual interest."
+            },
+            {
+                title: "Value",
+                definition: "The lightness or darkness of a color or tone. Value creates contrast, depth, and emphasis in design. It helps establish focal points and visual hierarchy."
+            },
+            {
+                title: "Texture",
+                definition: "The surface quality or feel of an object - rough, smooth, soft, hard, glossy, or matte. In design, texture can be actual (tactile) or implied (visual)."
+            },
+            {
+                title: "Size",
+                definition: "The physical dimensions of elements in relation to each other and the overall design. Size creates emphasis, hierarchy, and proportion. Larger elements typically draw more attention."
+            },
+            {
+                title: "Direction",
+                definition: "The visual flow or movement that guides the viewer's eye through the design. Direction can be horizontal, vertical, or diagonal, and is created through the arrangement of elements."
+            },
+            {
+                title: "Contrast",
+                definition: "The difference between design elements to create visual interest and hierarchy. Contrast can be achieved through color, size, shape, texture, or value differences."
+            }
+        ];
+
+        let currentCardIndex = 0;
+        let isFlipped = false;
+
+        const flashcard = document.getElementById('flashcard');
+        const cardTitle = document.getElementById('cardTitle');
+        const cardDefinition = document.getElementById('cardDefinition');
+        const currentCardSpan = document.getElementById('currentCard');
+        const totalCardsSpan = document.getElementById('totalCards');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressFill = document.getElementById('progressFill');
+
+        // Initialize
+        totalCardsSpan.textContent = flashcards.length;
+        updateCard();
+        updateNavigation();
+        updateProgress();
+
+        // Card flip functionality
+        flashcard.addEventListener('click', function() {
+            isFlipped = !isFlipped;
+            flashcard.classList.toggle('flipped');
+        });
+
+        function updateCard() {
+            const card = flashcards[currentCardIndex];
+            cardTitle.textContent = card.title;
+            cardDefinition.textContent = card.definition;
+            currentCardSpan.textContent = currentCardIndex + 1;
+            
+            // Reset flip state when changing cards
+            if (isFlipped) {
+                isFlipped = false;
+                flashcard.classList.remove('flipped');
+            }
+        }
+
+        function updateNavigation() {
+            prevBtn.disabled = currentCardIndex === 0;
+            nextBtn.disabled = currentCardIndex === flashcards.length - 1;
+        }
+
+        function updateProgress() {
+            const progress = ((currentCardIndex + 1) / flashcards.length) * 100;
+            progressFill.style.width = progress + '%';
+        }
+
+        function previousCard() {
+            if (currentCardIndex > 0) {
+                currentCardIndex--;
+                updateCard();
+                updateNavigation();
+                updateProgress();
+            }
+        }
+
+        function nextCard() {
+            if (currentCardIndex < flashcards.length - 1) {
+                currentCardIndex++;
+                updateCard();
+                updateNavigation();
+                updateProgress();
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                previousCard();
+            } else if (e.key === 'ArrowRight') {
+                nextCard();
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                flashcard.click();
+            }
+        });
+    </script>
+</body>
+</html>
